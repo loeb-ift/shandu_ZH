@@ -1,0 +1,2 @@
+[console_scripts]
+shandu = shandu.cli:cli
