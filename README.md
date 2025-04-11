@@ -99,7 +99,7 @@ flowchart TB
 pip install shandu
 
 # 從源代碼安裝
-git clone https://github.com/jolovicdev/shandu.git](https://github.com/loeb-ift/shandu_ZH.git
+git clone https://github.com/loeb-ift/shandu_ZH.git
 cd shandu
 pip install -e .
 ```
