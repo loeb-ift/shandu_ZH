@@ -68,15 +68,16 @@ def get_user_input(prompt: str) -> str:
         return "any"  # Return a generic answer to allow the process to continue to shutdown
     
     try:
-
         return input("> ").strip()
     except (KeyboardInterrupt, EOFError):
-
         with _shutdown_lock:
             global _shutdown_requested
             _shutdown_requested = True
         console.print("\n[yellow]Input interrupted. Proceeding with shutdown...[/]")
         return "any"  # Return a generic answer to allow the process to continue to shutdown
+    except UnicodeDecodeError as e:
+        console.print(f"[dim red]Encoding error: {str(e)}. Using default answer.[/dim red]")
+        return "any"  # Fallback to a generic answer
 
 def should_continue(state: AgentState) -> str:
     """Check if research should continue."""
@@ -385,12 +386,6 @@ REQUIREMENTS:
         log_error("Error in clarify_query", e, 
                  context=f"Query: {query}, Function: clarify_query")
         console.print(f"[dim red]Error in structured query refinement: {str(e)}. Using simpler approach.[/dim red]")
-        #current_file = os.path.basename(__file__)
-        #with open('example.txt', 'a') as file:
-            # Append the current file's name and some text
-            #file.write(f'This line was written by: {current_file}\n')
-            #file.write(f'Error {e}.\n')
-        # Fallback to non-structured approach
         try:
             # Direct approach without structured output
             response = await llm.ainvoke(f"""
@@ -404,10 +399,6 @@ REQUIREMENTS:
             
             refined_context_raw = response.content
 
-            # 此函式的目的是返回經過精煉處理後的研究查詢內容
-            # 在前面的流程中，程式透過與大語言模型互動，獲取了使用者對於查詢的澄清問題及回答
-            # 接著，利用這些問答資訊對原始查詢進行精煉，去除不必要的格式和前言資訊
-            # 最後，將處理好的精煉查詢內容作為結果返回，以便後續使用於研究流程
             return refined_context
         except Exception as e2:
             console.print(f"[dim red]Error in fallback query refinement: {str(e2)}. Using original query.[/dim red]")
