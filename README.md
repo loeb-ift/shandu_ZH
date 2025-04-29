@@ -94,5 +94,5 @@ results = researcher.research_sync(
 )  
   
 # 打印或保存結果  
-print(results.to_markdown())
-```
+print(results.to_markdown())```
+
