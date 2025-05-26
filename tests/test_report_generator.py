@@ -1,8 +1,8 @@
 import unittest
 from unittest.mock import AsyncMock, patch
 import asyncio
-from shandu.agents.processors.report_generator import format_citations
-from shandu.agents.utils.citation_registry import CitationRegistry
+from ohlala.agents.processors.report_generator import format_citations
+from ohlala.agents.utils.citation_registry import CitationRegistry
 
 class TestReportGenerator(unittest.TestCase):
     """報告生成函數的基本測試。"""

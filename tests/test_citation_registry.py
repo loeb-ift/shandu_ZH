@@ -1,5 +1,5 @@
 import unittest
-from shandu.agents.utils.citation_registry import CitationRegistry
+from ohlala.agents.utils.citation_registry import CitationRegistry
 
 class TestCitationRegistry(unittest.TestCase):
     """CitationRegistry類的基本測試。"""

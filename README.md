@@ -1,10 +1,10 @@
-# Shandu 項目概述
+# Ohlala 項目概述
 
-Shandu 是一個先進的 AI 研究系統，專為綜合知識合成而設計。根據程式碼庫中的資訊，Shandu 是一個基於 LLM（大型語言模型）的智能研究系統，能夠自動化完成從初始查詢到深入內容分析和報告生成的全面研究過程。
+Ohlala 是一個先進的 AI 研究系統，專為綜合知識合成而設計。根據程式碼庫中的資訊，Ohlala 是一個基於 LLM（大型語言模型）的智能研究系統，能夠自動化完成從初始查詢到深入內容分析和報告生成的全面研究過程。
 
 ## 主要功能
 
-Shandu 系統具有以下主要功能：
+Ohlala 系統具有以下主要功能：
 
 - **基於狀態的工作流程**：利用 LangGraph 實現結構化、逐步的研究過程，具有明確的狀態轉換。
 - **迭代深度探索**：透過動態深度和廣度遞歸探索主題，適應發現的資訊。
@@ -16,7 +16,7 @@ Shandu 系統具有以下主要功能：
 
 ## 研究工作流程
 
-Shandu 實現了一個複雜的多階段研究流程：
+Ohlala 實現了一個複雜的多階段研究流程：
 
 1. **查詢澄清**：透過互動問題了解研究需求。
 2. **研究規劃**：為全面主題覆蓋進行戰略規劃。
@@ -40,7 +40,7 @@ Shandu 實現了一個複雜的多階段研究流程：
 
    ### 初始化節點 (Initialize Node) 詳細說明
 
-   在 Shandu 研究系統中，初始化節點 (initialize_node) 是研究工作流程的第一個步驟，負責建立研究計劃並設置初始狀態。這個節點在 LangGraph 狀態圖中作為入口點，為整個研究過程奠定基礎。
+   在 Ohlala 研究系統中，初始化節點 (initialize_node) 是研究工作流程的第一個步驟，負責建立研究計劃並設置初始狀態。這個節點在 LangGraph 狀態圖中作為入口點，為整個研究過程奠定基礎。
 
    #### 功能與目的
 
@@ -134,7 +134,7 @@ Shandu 實現了一個複雜的多階段研究流程：
 - 未來發展趨勢的預測
 與其他組件的集成
 
-初始化節點與 Shandu 系統的其他組件緊密集成：
+初始化節點與 Ohlala 系統的其他組件緊密集成：
 
 ResearchGraph：初始化節點是 ResearchGraph 工作流程的第一個節點 langgraph_agent.py:83-84
 AgentState：初始化節點更新 AgentState 對象，該對象在整個研究過程中維護狀態 initialize.py:36
@@ -175,28 +175,28 @@ LLM：初始化節點使用語言模型生成研究計劃 initialize.py:43-67
 
 ## 使用方法
 
-Shandu 可以透過命令列介面或 Python API 使用：
+Ohlala 可以透過命令列介面或 Python API 使用：
 
 ### 命令列介面
 
 ```bash
 # 配置 API 設定（支持各種 LLM 提供商）  
-shandu configure  
+ohlala configure  
   
 # 進行全面研究  
-shandu research "您的研究查詢" --depth 2 --breadth 4 --output report.md  
+ohlala research "您的研究查詢" --depth 2 --breadth 4 --output report.md  
   
 # 快速 AI 驅動搜尋與網頁抓取  
-shandu aisearch "誰是美國現任總統？" --detailed  
+ohlala aisearch "誰是美國現任總統？" --detailed  
   
 # 基本多引擎搜尋  
-shandu search "您的搜尋查詢"
+ohlala search "您的搜尋查詢"
 ## 使用方法
 
-以下是如何使用 Shandu 進行深度研究的範例代碼：
+以下是如何使用 Ohlala 進行深度研究的範例代碼：
 
 ```python
-from shandu.agents import ResearchGraph  
+from ohlala.agents import ResearchGraph  
 from langchain_openai import ChatOpenAI  
   
 # 如果需要，使用自定義 LLM 初始化  
