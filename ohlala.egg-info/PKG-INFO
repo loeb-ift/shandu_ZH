@@ -1,11 +1,7 @@
 Metadata-Version: 2.2
-Name: shandu
+Name: ohlala
 Version: 1.5.2
 Summary: Deep research system with LangChain and LangGraph
-Home-page: https://github.com/jolovicdev/shandu
-Author: Dušan Jolović
-Author-email: jolovic@pm.me
-Project-URL: Source, https://github.com/jolovicdev/shandu
 Keywords: research,ai,llm,langchain,langgraph,deepresearch,deepsearch,search
 Classifier: Development Status :: 3 - Alpha
 Classifier: Intended Audience :: Science/Research
