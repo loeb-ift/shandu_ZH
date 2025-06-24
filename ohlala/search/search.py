@@ -63,8 +63,8 @@ logger.addHandler(console_handler)
 
 # API Keys and Configuration Settings - Centralized management for all API keys and environment settings
 # Please update your API keys here
-GOOGLE_CUSTOM_API_KEY = "AIzaSyCqjxmnwoLRPWFtBGg4vbXrflh8MxGgApA"
-GOOGLE_CUSTOM_CX = "017576662512468239146:omuauf_lfve"
+GOOGLE_CUSTOM_API_KEY = "xxxxx"
+GOOGLE_CUSTOM_CX = "xxxx"
 BRAVE_API_KEY = "your_brave_api_key_here"
 
 # Try to get USER_AGENT from environment, otherwise use a generic one
