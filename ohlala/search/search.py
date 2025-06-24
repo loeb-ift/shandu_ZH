@@ -63,8 +63,8 @@ logger.addHandler(console_handler)
 
 # API Keys and Configuration Settings - Centralized management for all API keys and environment settings
 # Please update your API keys here
-GOOGLE_CUSTOM_API_KEY = "AI-xxxxxxx"
-GOOGLE_CUSTOM_CX = "xxxxxxxxxxxxx"
+GOOGLE_CUSTOM_API_KEY = "AIzaSyCqjxmnwoLRPWFtBGg4vbXrflh8MxGgApA"
+GOOGLE_CUSTOM_CX = "017576662512468239146:omuauf_lfve"
 BRAVE_API_KEY = "your_brave_api_key_here"
 
 # Try to get USER_AGENT from environment, otherwise use a generic one
@@ -717,9 +717,21 @@ LOG_DIR = os.path.join(PROJECT_ROOT, "logs")
 if not os.path.exists(LOG_DIR):
     os.makedirs(LOG_DIR, exist_ok=True)
     
-# 初始化日志系统（保持原有配置）
+# 初始化日志系统（保留原有配置）
 self.logger = setup_logger(
     name=self.__class__.__name__,
     log_file=os.path.join(LOG_DIR, 'search_operations.log'),
-    # ... 其他原有参数保持不变 ...
+    # 保留关键参数说明
+    max_bytes=10*1024*1024,  # 10MB
+    backup_count=5
+    # 移除冗余注释：
+    # - 日志路径已通过LOG_DIR统一管理
+    # - 日志级别从配置读取
 )
+def parse_results(self, html):
+    """
+    [现有文档字符串已包含完整说明]
+    """
+    # 使用BeautifulSoup解析HTML
+    # 提取标题、URL和摘要
+    soup = BeautifulSoup(html, 'lxml')
