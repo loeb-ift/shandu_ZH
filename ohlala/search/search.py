@@ -63,237 +63,70 @@ logger.addHandler(console_handler)
 
 # API Keys and Configuration Settings - Centralized management for all API keys and environment settings
 # Please update your API keys here
-GOOGLE_CUSTOM_API_KEY = "xxxxx"
-GOOGLE_CUSTOM_CX = "xxxx"
+GOOGLE_CUSTOM_API_KEY = "XXX"
+GOOGLE_CUSTOM_CX = "XXX"
 BRAVE_API_KEY = "your_brave_api_key_here"
 
 # Try to get USER_AGENT from environment, otherwise use a generic one
-USER_AGENT = os.environ.get('USER_AGENT', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36')
+# 定义多平台现代浏览器用户代理池
+USER_AGENTS = [
+    # Chrome 最新版本 (Windows/MacOS/Linux)
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 13_5_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+    
+    # Firefox 最新版本
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0',
+    'Mozilla/5.0 (X11; Linux x86_64; rv:124.0) Gecko/20100101 Firefox/124.0',
+    
+    # Safari 最新版本
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 13_5_1) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.5 Safari/605.1.15',
+    
+    # Edge 最新版本
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36 Edg/121.0.0.0'
+]
 
-# Cache settings
-CACHE_ENABLED = True
-CACHE_DIR = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)),
-    '..',
-    '..',
-    '.cache',
-    'search'
-)
-CACHE_TTL = 86400  # 24 hours in seconds
+# 修改获取逻辑
+USER_AGENT = os.environ.get('USER_AGENT', random.choice(USER_AGENTS))
 
-if CACHE_ENABLED and not os.path.exists(CACHE_DIR):
+# 在搜索请求中应用
+async def fetch(self, url):
+    headers = {
+        'User-Agent': USER_AGENT,
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5'
+    }
+    self.logger.info(f"開始使用 Google 搜尋關鍵詞: {query}")
     try:
-        os.makedirs(CACHE_DIR, exist_ok=True)
+        delay = random.uniform(1, 5)  # 隨機延遲 1 到 5 秒
+        await asyncio.sleep(delay)
+
+        results = []
+        self.logger.info(f"呼叫 googlesearch 庫進行搜尋，最大結果數: {self.max_results}")
+        
+        try:
+            google_results = list(GoogleSearch(query, num_results=self.max_results))
+        except Exception as e:
+            self.logger.error(f"呼叫 googlesearch 庫時出錯: {e}")
+            google_results = []
+        self.logger.info(f"從 googlesearch 庫獲得的結果數量: {len(google_results)}")
+        for j in google_results:
+            result = SearchResult(
+                url = j,
+                title = j,  # We don't have titles from this library
+                snippet = "",  # We don't have snippets from this library
+                source = "Google"
+            )
+            results.append(result)
+
+        if results:
+            self.logger.info("嘗試豐富 Google 搜尋結果的標題和摘要")
+            await self._enrich_google_results(results, query)
+
+        self.logger.info(f"最終的 Google 搜尋結果數量: {len(results)}")
+        return results
     except Exception as e:
-        logger.warning(f"Could not create cache directory: {e}")
-        CACHE_ENABLED = False
-
-@dataclass
-class SearchResult:
-    """Class to store search results."""
-    url: str
-    title: str
-    snippet: str
-    source: str
-
-    def __str__(self) -> str:
-        """String representation of search result."""
-        return f"Title: {self.title}\nURL: {self.url}\nSnippet: {self.snippet}\nSource: {self.source}"
-
-    def to_dict(self) -> Dict[str, Any]:
-        """Convert to dictionary format."""
-        return {
-            "url": self.url,
-            "title": self.title,
-            "snippet": self.snippet,
-            "source": self.source
-        }
-
-class UnifiedSearcher:
-    """Unified search engine that can use multiple search engines with improved parallelism and caching."""
-
-    def __init__(self, max_results: int = 10, cache_enabled: bool = CACHE_ENABLED, cache_ttl: int = CACHE_TTL, mode: str = "development"):
-        """
-        Initialize the unified searcher.
-
-        Args:
-            max_results: Maximum number of results to return per engine
-            cache_enabled: Whether to use caching for search results
-            cache_ttl: Time-to-live for cached content in seconds
-        """
-        self.max_results = max_results
-        self.user_agent = USER_AGENT
-        self.default_engine = "google"  # Set a default engine
-        self.cache_enabled = cache_enabled
-        self.cache_ttl = cache_ttl
-        self.in_progress_queries: Set[str] = set()  # Track queries being processed to prevent duplicates
-        self._semaphores = {}  # Dictionary to store semaphores for each event loop
-        self._semaphore_lock = asyncio.Lock()  # Lock for thread-safe access to semaphores
-
-        self.mode = mode
-        self.logger = logging.getLogger("SearchEngine") # Use a specific logger for the class
-        self.logger.setLevel(logging.INFO)
-
-        # Configure development mode logging only if handlers are not already set
-        if self.mode == "development" and not self.logger.handlers:
-            log_dir = "logs"
-            if not os.path.exists(log_dir):
-                os.makedirs(log_dir)
-            log_file = os.path.join(log_dir, "search.log")
-            file_handler = RotatingFileHandler(log_file, maxBytes = 1024 * 1024 * 5, backupCount = 5, encoding = 'utf-8')
-            formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-            file_handler.setFormatter(formatter)
-            self.logger.addHandler(file_handler)
-            self.logger.addHandler(console_handler) # Also add console handler to class logger
-
-        # Try to use fake_useragent if available
-        try:
-            ua = UserAgent()
-            self.user_agent = ua.random
-        except Exception as e:
-            self.logger.warning(f"Could not generate random user agent: {e}. Using default.")
-
-    async def _check_cache(self, query: str, engine: str) -> Optional[List[SearchResult]]:
-        """Check if search results are available in cache and not expired."""
-        if not self.cache_enabled:
-            return None
-
-        cache_key = f"{engine}_{query}".replace(" ", "_").replace("/", "_").replace(".", "_")
-        cache_path = os.path.join(CACHE_DIR, f"{cache_key}.json")
-
-        if not os.path.exists(cache_path):
-            return None
-
-        try:
-            if time.time() - os.path.getmtime(cache_path) > self.cache_ttl:
-                return None
-
-            # Load cached content
-            with open(cache_path, 'r', encoding = 'utf-8') as f:
-                data = json.load(f)
-
-            results = []
-            for item in data:
-                results.append(SearchResult(
-                    url = item["url"],
-                    title = item["title"],
-                    snippet = item["snippet"],
-                    source = item["source"]
-                ))
-            return results
-        except Exception as e:
-            self.logger.warning(f"Error loading cache for {query} on {engine}: {e}")
-            return None
-
-    async def _save_to_cache(self, query: str, engine: str, results: List[SearchResult]) -> bool:
-        """Save search results to cache."""
-        if not self.cache_enabled or not results:
-            return False
-
-        cache_key = f"{engine}_{query}".replace(" ", "_").replace("/", "_").replace(".", "_")
-        cache_path = os.path.join(CACHE_DIR, f"{cache_key}.json")
-
-        try:
-            data = [result.to_dict() for result in results]
-
-            with open(cache_path, 'w', encoding = 'utf-8') as f:
-                json.dump(data, f, ensure_ascii = False)
-            return True
-        except Exception as e:
-            self.logger.warning(f"Error saving cache for {query} on {engine}: {e}")
-            return False
-
-    async def _search_google_custom(self, query: str) -> List[SearchResult]:
-        """
-        Search using Google Custom Search JSON API.
-
-        Args:
-            query: Search query
-
-        Returns:
-            List of search results
-        """
-        try:
-            api_key = GOOGLE_CUSTOM_API_KEY
-            cx = GOOGLE_CUSTOM_CX
-
-            if api_key == "your_google_custom_api_key_here" or cx == "your_search_engine_id_here":
-                self.logger.error("Google Custom Search API金鑰或搜索引擎ID未配置 - 請檢查文件開頭的API設置部分")
-                raise ValueError("請替換search.py中的Google Custom Search API佔位符")
-
-            timeout = aiohttp.ClientTimeout(total = 15)
-            async with aiohttp.ClientSession(timeout = timeout) as session:
-                params = {
-                    "key": api_key,
-                    "cx": cx,
-                    "q": query,
-                    "num": self.max_results
-                }
-                url = "https://customsearch.googleapis.com/customsearch/v1"
-
-                async with session.get(url, params = params) as response:
-                    self.logger.info(f"Google Custom Search API response status: {response.status}")
-                    if response.status != 200:
-                        self.logger.warning(f"Google Custom Search返回狀態碼 {response.status}")
-                        self.logger.error(f"Google Custom Search failed with status {response.status}")
-                        raise ValueError(f"Google Custom Search請求失敗，狀態碼 {response.status}")
-
-                    data = await response.json()
-                    self.logger.info(f"Google Custom Search response data: {data}")
-                    results = []
-
-                    if "items" in data:
-                        for item in data["items"][:self.max_results]:
-                            result = SearchResult(
-                                url = item.get("link", ""),
-                                title = item.get("title", ""),
-                                snippet = item.get("snippet", ""),
-                                source = "Google Custom Search"
-                            )
-                            results.append(result)
-
-                    return results
-
-        except asyncio.TimeoutError:
-            self.logger.warning(f"Google Custom Search請求超時: {query}")
-            raise
-        except Exception as e:
-            self.logger.error(f"Google Custom Search錯誤: {e}")
-            raise
-
-    async def _search_google(self, query: str) -> List[SearchResult]:
-        self.logger.info(f"開始使用 Google 搜尋關鍵詞: {query}")
-        try:
-            delay = random.uniform(1, 5)  # 隨機延遲 1 到 5 秒
-            await asyncio.sleep(delay)
-
-            results = []
-            self.logger.info(f"呼叫 googlesearch 庫進行搜尋，最大結果數: {self.max_results}")
-            
-            try:
-                google_results = list(GoogleSearch(query, num_results=self.max_results))
-            except Exception as e:
-                self.logger.error(f"呼叫 googlesearch 庫時出錯: {e}")
-                google_results = []
-            self.logger.info(f"從 googlesearch 庫獲得的結果數量: {len(google_results)}")
-            for j in google_results:
-                result = SearchResult(
-                    url = j,
-                    title = j,  # We don't have titles from this library
-                    snippet = "",  # We don't have snippets from this library
-                    source = "Google"
-                )
-                results.append(result)
-
-            if results:
-                self.logger.info("嘗試豐富 Google 搜尋結果的標題和摘要")
-                await self._enrich_google_results(results, query)
-
-            self.logger.info(f"最終的 Google 搜尋結果數量: {len(results)}")
-            return results
-        except Exception as e:
-            self.logger.error(f"Error during Google search: {e}")
-            raise
+        self.logger.error(f"Error during Google search: {e}")
+        raise
 
     async def _enrich_google_results(self, results: List[SearchResult], query: str) -> None:
         """
