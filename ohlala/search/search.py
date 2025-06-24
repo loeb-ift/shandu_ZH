@@ -63,8 +63,8 @@ logger.addHandler(console_handler)
 
 # API Keys and Configuration Settings - Centralized management for all API keys and environment settings
 # Please update your API keys here
-GOOGLE_CUSTOM_API_KEY = "XXXX"
-GOOGLE_CUSTOM_CX = "XXXX"
+GOOGLE_CUSTOM_API_KEY = "AI-xxxxxxx"
+GOOGLE_CUSTOM_CX = "xxxxxxxxxxxxx"
 BRAVE_API_KEY = "your_brave_api_key_here"
 
 # Try to get USER_AGENT from environment, otherwise use a generic one
@@ -72,7 +72,13 @@ USER_AGENT = os.environ.get('USER_AGENT', 'Mozilla/5.0 (Windows NT 10.0; Win64; 
 
 # Cache settings
 CACHE_ENABLED = True
-CACHE_DIR = os.path.expanduser("~/.shandu/cache/search")
+CACHE_DIR = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)),
+    '..',
+    '..',
+    '.cache',
+    'search'
+)
 CACHE_TTL = 86400  # 24 hours in seconds
 
 if CACHE_ENABLED and not os.path.exists(CACHE_DIR):
@@ -702,3 +708,18 @@ class UnifiedSearcher:
         result = asyncio.run(self.search(query, engines))
         logger.info(f"同步搜尋完成，返回結果數量: {len(result)}")
         return result
+
+# 项目根目录相对路径处理
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.."))
+LOG_DIR = os.path.join(PROJECT_ROOT, "logs")
+
+# 在日志初始化前添加目录检查
+if not os.path.exists(LOG_DIR):
+    os.makedirs(LOG_DIR, exist_ok=True)
+    
+# 初始化日志系统（保持原有配置）
+self.logger = setup_logger(
+    name=self.__class__.__name__,
+    log_file=os.path.join(LOG_DIR, 'search_operations.log'),
+    # ... 其他原有参数保持不变 ...
+)
